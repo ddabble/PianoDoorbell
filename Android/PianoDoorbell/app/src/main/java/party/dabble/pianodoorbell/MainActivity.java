@@ -24,13 +24,16 @@ import java.util.UUID;
 
 public class MainActivity extends Activity
 {
+	BluetoothAdapter bluetoothAdapter;
+	BluetoothSocket bluetoothSocket;
+	BluetoothDevice bluetoothDevice;
+
+	OutputStream outputStream;
+	InputStream inputStream;
+
 	TextView myLabel;
 	EditText myTextbox;
-	BluetoothAdapter mBluetoothAdapter;
-	BluetoothSocket mmSocket;
-	BluetoothDevice mmDevice;
-	OutputStream mmOutputStream;
-	InputStream mmInputStream;
+
 	Thread workerThread;
 	volatile boolean stopWorker;
 
@@ -102,19 +105,17 @@ public class MainActivity extends Activity
 
 	void findBT()
 	{
-		mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-		if (mBluetoothAdapter == null)
-		{
+		bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+		if (bluetoothAdapter == null)
 			myLabel.setText("No bluetooth adapter available");
-		}
 
-		if (!mBluetoothAdapter.isEnabled())
+		if (!bluetoothAdapter.isEnabled())
 		{
 			Intent enableBluetooth = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
 			startActivityForResult(enableBluetooth, 0);
 		}
 
-		Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+		Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
 		if (pairedDevices.size() > 0)
 		{
 			for (BluetoothDevice device : pairedDevices)
@@ -122,7 +123,7 @@ public class MainActivity extends Activity
 				String name = device.getName().trim();
 				if (name.equals("PLab_Anders"))
 				{
-					mmDevice = device;
+					bluetoothDevice = device;
 					break;
 				}
 			}
@@ -133,17 +134,17 @@ public class MainActivity extends Activity
 	void openBT() throws IOException
 	{
 		UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"); //Standard SerialPortService ID
-		mmSocket = mmDevice.createRfcommSocketToServiceRecord(uuid);
-		mmSocket.connect();
-		mmOutputStream = mmSocket.getOutputStream();
-		mmInputStream = mmSocket.getInputStream();
+		bluetoothSocket = bluetoothDevice.createRfcommSocketToServiceRecord(uuid);
+		bluetoothSocket.connect();
+		outputStream = bluetoothSocket.getOutputStream();
+		inputStream = bluetoothSocket.getInputStream();
 
-		beginListenForData();
+		beginListeningForData();
 
 		myLabel.setText("Bluetooth Opened");
 	}
 
-	void beginListenForData()
+	void beginListeningForData()
 	{
 		final Handler handler = new Handler();
 
@@ -170,25 +171,17 @@ public class MainActivity extends Activity
 				{
 					try
 					{
-						int bytesAvailable = mmInputStream.available();
+						int bytesAvailable = inputStream.available();
 						if (bytesAvailable > 0)
 						{
 							byte[] packetBytes = new byte[bytesAvailable];
-							mmInputStream.read(packetBytes);
+							inputStream.read(packetBytes);
 							for (int i = 0; i < bytesAvailable; i++)
 							{
 								final byte b = packetBytes[i];
 
 								byte key = (byte)Math.abs(b);
 								byte action = (byte)(b >>> 7);
-
-//								handler.post(new Runnable()
-//								{
-//									public void run()
-//									{
-//										myLabel.setText(b + "");
-//									}
-//								});
 
 								PianoKey pianoKey;
 								switch (key)
@@ -216,14 +209,9 @@ public class MainActivity extends Activity
 								}
 
 								if (action == 0)
-								{
-//									System.out.println("Playing key " + key + "...");
 									pianoKey.play();
-								} else
-								{
+								else
 									pianoKey.stop();
-//									System.out.println("Stopped playing key " + key + ".");
-								}
 							}
 						}
 					} catch (IOException ex)
@@ -231,7 +219,6 @@ public class MainActivity extends Activity
 						stopWorker = true;
 					}
 				}
-
 				terminateThreads();
 			}
 		});
@@ -243,7 +230,7 @@ public class MainActivity extends Activity
 	{
 		String msg = myTextbox.getText().toString();
 		msg += "\n";
-		mmOutputStream.write(msg.getBytes());
+		outputStream.write(msg.getBytes());
 		myLabel.setText("Data Sent");
 	}
 
@@ -251,9 +238,9 @@ public class MainActivity extends Activity
 	{
 		stopWorker = true;
 		terminateThreads();
-		mmOutputStream.close();
-		mmInputStream.close();
-		mmSocket.close();
+		outputStream.close();
+		inputStream.close();
+		bluetoothSocket.close();
 		myLabel.setText("Bluetooth Closed");
 	}
 

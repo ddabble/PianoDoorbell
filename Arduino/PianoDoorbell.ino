@@ -35,19 +35,9 @@ void loop()
     Serial.write(c);
   }
 
-  /*
-  while (Serial.available())
-  {
-    char c = Serial.read();
-    btSerial.write(c);
-  }
-  */
-
   const unsigned long currentTime = micros();
   for (int i = 0; i < sizeof(keyPins) / sizeof(int); i++)
-  {
     checkKeyState(i, currentTime);
-  }
 }
 
 void checkKeyState(const int index, const unsigned long currentTime_micros)
@@ -59,7 +49,6 @@ void checkKeyState(const int index, const unsigned long currentTime_micros)
   if (keyState != keyLastStates[index])
   {
     int action = (keyState == HIGH) ? -1 : 1;
-    //Serial.println(action * (index + 1));
     btSerial.write(action * (index + 1));
 
     keyLastStates[index] = keyState;
