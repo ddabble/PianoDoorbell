@@ -56,36 +56,33 @@ public class PianoKey
 		});
 	}
 
-	public void genTone()
+	private void genTone()
 	{
-		final int targetSamples = SAMPLE_RATE;
-
 		// calculate adjustments to make the sample start and stop evenly
-		int numCycles = (int)(0.5 + toneFrequency * targetSamples / SAMPLE_RATE);
+		int numCycles = (int)(0.5 + toneFrequency);
 		numSamples = (int)(0.5 + numCycles * SAMPLE_RATE / toneFrequency);
 
 		double[] samples = new double[numSamples];
 
 		// fill out the array
-		for (int i = 0; i < numSamples; ++i)
+		for (int i = 0; i < numSamples; i++)
 			samples[i] = Math.sin(2 * Math.PI * i / (SAMPLE_RATE / toneFrequency));
+
 		// convert to 16 bit pcm sound array
 		// assumes the sample buffer is normalized.
-
 		generatedSnd = new byte[samples.length * 2];
-
 		int idx = 0;
-		for (int i = 0; i < samples.length; i++)
+		for (double sample : samples)
 		{
 			// scale loudness by frequency
-			double amplitude = (double)(32767 * 5 / (Math.log(toneFrequency)));
-			if (amplitude > 32767)
-				amplitude = 32767;
+			double amplitude = 0x7FFF * 5 / Math.log(toneFrequency);
+			if (amplitude > 0x7FFF)
+				amplitude = 0x7FFF;
 			// scale signal to amplitude
-			short val = (short)(samples[i] * amplitude);
+			short val = (short)(sample * amplitude);
 			// in 16 bit wav PCM, first byte is the low order byte
-			generatedSnd[idx++] = (byte)(val & 0x00ff);
-			generatedSnd[idx++] = (byte)((val & 0xff00) >>> 8);
+			generatedSnd[idx++] = (byte)(val & 0x00FF);
+			generatedSnd[idx++] = (byte)((val & 0xFF00) >>> 8);
 		}
 	}
 

@@ -10,7 +10,6 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -34,8 +33,8 @@ public class MainActivity extends Activity
 	TextView myLabel;
 	EditText myTextbox;
 
-	Thread workerThread;
-	volatile boolean stopWorker;
+	Thread listenerThread;
+	volatile boolean keepListening;
 
 	PianoKey key1;
 	PianoKey key2;
@@ -137,10 +136,8 @@ public class MainActivity extends Activity
 
 	void beginListeningForData()
 	{
-		final Handler handler = new Handler();
-
-		stopWorker = false;
-		workerThread = new Thread(() ->
+		keepListening = true;
+		listenerThread = new Thread(() ->
 		{
 			key1 = new PianoKey(440.00f);
 			key2 = new PianoKey(466.16f);
@@ -156,62 +153,62 @@ public class MainActivity extends Activity
 //			key11 = new PianoKey(783.99f);
 //			key12 = new PianoKey(830.61f);
 
-			while (!Thread.currentThread().isInterrupted() && !stopWorker)
+			while (keepListening && !Thread.currentThread().isInterrupted())
 			{
 				try
 				{
 					int bytesAvailable = inputStream.available();
-					if (bytesAvailable > 0)
+					if (bytesAvailable <= 0)
+						continue;
+
+					byte[] packetBytes = new byte[bytesAvailable];
+					inputStream.read(packetBytes);
+					for (int i = 0; i < bytesAvailable; i++)
 					{
-						byte[] packetBytes = new byte[bytesAvailable];
-						inputStream.read(packetBytes);
-						for (int i = 0; i < bytesAvailable; i++)
+						final byte b = packetBytes[i];
+
+						byte key = (byte)Math.abs(b);
+						byte action = (byte)(b >>> 7);
+
+						PianoKey pianoKey;
+						switch (key)
 						{
-							final byte b = packetBytes[i];
-
-							byte key = (byte)Math.abs(b);
-							byte action = (byte)(b >>> 7);
-
-							PianoKey pianoKey;
-							switch (key)
-							{
-								case 1:
-									pianoKey = key1;
-									break;
-								case 2:
-									pianoKey = key2;
-									break;
-								case 3:
-									pianoKey = key3;
-									break;
-								case 4:
-									pianoKey = key4;
-									break;
-								case 5:
-									pianoKey = key5;
-									break;
-								case 6:
-									pianoKey = key6;
-									break;
-								default:
-									continue;
-							}
-
-							if (action == 0)
-								pianoKey.play();
-							else
-								pianoKey.stop();
+							case 1:
+								pianoKey = key1;
+								break;
+							case 2:
+								pianoKey = key2;
+								break;
+							case 3:
+								pianoKey = key3;
+								break;
+							case 4:
+								pianoKey = key4;
+								break;
+							case 5:
+								pianoKey = key5;
+								break;
+							case 6:
+								pianoKey = key6;
+								break;
+							default:
+								continue;
 						}
+
+						if (action == 0)
+							pianoKey.play();
+						else
+							pianoKey.stop();
 					}
 				} catch (IOException ex)
 				{
-					stopWorker = true;
+					keepListening = false;
 				}
 			}
 			terminateThreads();
 		});
 
-		workerThread.start();
+		listenerThread.start();
 	}
 
 	void sendData() throws IOException
@@ -224,7 +221,7 @@ public class MainActivity extends Activity
 
 	void closeBT() throws IOException
 	{
-		stopWorker = true;
+		keepListening = false;
 		terminateThreads();
 		outputStream.close();
 		inputStream.close();
