@@ -1,5 +1,7 @@
 /*
-Code based on http://blog.workingsi.com/2012/03/android-tone-generator-app.html, by siliconfish
+Code based on http://blog.workingsi.com/2012/03/android-tone-generator-app.html, by siliconfish,
+	which is based on the answers to https://stackoverflow.com/q/2413426/5587187, mainly by Steve Pomeroy and Xarph,
+		which is based on https://marblemice.blogspot.com/2010/04/generate-and-play-tone-in-android.html, by Paul Reeves
 */
 
 package party.dabble.pianodoorbell;
