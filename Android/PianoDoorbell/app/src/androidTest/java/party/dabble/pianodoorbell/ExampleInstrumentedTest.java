@@ -1,4 +1,4 @@
-package party.dabble.arduino_pa_hybelen;
+package party.dabble.pianodoorbell;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
 
-        assertEquals("party.dabble.arduino_pa_hybelen", appContext.getPackageName());
+        assertEquals("party.dabble.pianodoorbell", appContext.getPackageName());
     }
 }

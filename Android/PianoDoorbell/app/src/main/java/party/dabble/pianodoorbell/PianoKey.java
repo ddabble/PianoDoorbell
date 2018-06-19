@@ -2,7 +2,7 @@
 Code based on http://blog.workingsi.com/2012/03/android-tone-generator-app.html, by siliconfish
 */
 
-package party.dabble.arduino_pa_hybelen;
+package party.dabble.pianodoorbell;
 
 import android.media.AudioFormat;
 import android.media.AudioManager;

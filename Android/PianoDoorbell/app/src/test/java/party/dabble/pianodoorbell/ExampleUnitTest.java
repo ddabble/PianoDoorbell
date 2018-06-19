@@ -1,4 +1,4 @@
-package party.dabble.arduino_pa_hybelen;
+package party.dabble.pianodoorbell;
 
 import org.junit.Test;
 

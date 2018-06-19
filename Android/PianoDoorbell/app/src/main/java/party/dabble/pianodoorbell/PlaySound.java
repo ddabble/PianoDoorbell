@@ -2,7 +2,7 @@
 Code based on the answers to https://stackoverflow.com/q/2413426/5587187, mainly by Steve Pomeroy and Xarph
 */
 
-package party.dabble.arduino_pa_hybelen;
+package party.dabble.pianodoorbell;
 
 import android.media.AudioFormat;
 import android.media.AudioManager;

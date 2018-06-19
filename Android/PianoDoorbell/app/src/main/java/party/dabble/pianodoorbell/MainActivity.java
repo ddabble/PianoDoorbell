@@ -2,7 +2,7 @@
 Code based on http://stackoverflow.com/a/13923345/5587187, by Majdi_la
 */
 
-package party.dabble.arduino_pa_hybelen;
+package party.dabble.pianodoorbell;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
