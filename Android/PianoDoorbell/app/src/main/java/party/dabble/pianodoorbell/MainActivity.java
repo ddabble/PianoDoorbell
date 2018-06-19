@@ -57,48 +57,39 @@ public class MainActivity extends Activity
 		myTextbox = (EditText)findViewById(R.id.entry);
 
 		//Open Button
-		openButton.setOnClickListener(new View.OnClickListener()
+		openButton.setOnClickListener((View v) ->
 		{
-			public void onClick(View v)
+			try
 			{
-				try
-				{
-					findBT();
-					openBT();
-				} catch (IOException e)
-				{
-					e.printStackTrace();
-				}
+				findBT();
+				openBT();
+			} catch (IOException e)
+			{
+				e.printStackTrace();
 			}
 		});
 
 		//Send Button
-		sendButton.setOnClickListener(new View.OnClickListener()
+		sendButton.setOnClickListener((View v) ->
 		{
-			public void onClick(View v)
+			try
 			{
-				try
-				{
-					sendData();
-				} catch (IOException e)
-				{
-					e.printStackTrace();
-				}
+				sendData();
+			} catch (IOException e)
+			{
+				e.printStackTrace();
 			}
 		});
 
 		//Close button
-		closeButton.setOnClickListener(new View.OnClickListener()
+		closeButton.setOnClickListener((View v) ->
 		{
-			public void onClick(View v)
+			try
 			{
-				try
-				{
-					closeBT();
-				} catch (IOException e)
-				{
-					e.printStackTrace();
-				}
+				closeBT();
+			} catch (IOException e)
+			{
+				e.printStackTrace();
 			}
 		});
 	}
@@ -149,78 +140,75 @@ public class MainActivity extends Activity
 		final Handler handler = new Handler();
 
 		stopWorker = false;
-		workerThread = new Thread(new Runnable()
+		workerThread = new Thread(() ->
 		{
-			public void run()
+			key1 = new PianoKey(440.00f);
+			key2 = new PianoKey(466.16f);
+			key3 = new PianoKey(493.88f);
+			key4 = new PianoKey(523.25f);
+			key5 = new PianoKey(554.37f);
+			key6 = new PianoKey(587.33f);
+
+//			key7 = new PianoKey(622.25f);
+//			key8 = new PianoKey(659.25f);
+//			key9 = new PianoKey(698.46f);
+//			key10 = new PianoKey(739.99f);
+//			key11 = new PianoKey(783.99f);
+//			key12 = new PianoKey(830.61f);
+
+			while (!Thread.currentThread().isInterrupted() && !stopWorker)
 			{
-				key1 = new PianoKey(440.00f);
-				key2 = new PianoKey(466.16f);
-				key3 = new PianoKey(493.88f);
-				key4 = new PianoKey(523.25f);
-				key5 = new PianoKey(554.37f);
-				key6 = new PianoKey(587.33f);
-
-//				key7 = new PianoKey(622.25f);
-//				key8 = new PianoKey(659.25f);
-//				key9 = new PianoKey(698.46f);
-//				key10 = new PianoKey(739.99f);
-//				key11 = new PianoKey(783.99f);
-//				key12 = new PianoKey(830.61f);
-
-				while (!Thread.currentThread().isInterrupted() && !stopWorker)
+				try
 				{
-					try
+					int bytesAvailable = inputStream.available();
+					if (bytesAvailable > 0)
 					{
-						int bytesAvailable = inputStream.available();
-						if (bytesAvailable > 0)
+						byte[] packetBytes = new byte[bytesAvailable];
+						inputStream.read(packetBytes);
+						for (int i = 0; i < bytesAvailable; i++)
 						{
-							byte[] packetBytes = new byte[bytesAvailable];
-							inputStream.read(packetBytes);
-							for (int i = 0; i < bytesAvailable; i++)
+							final byte b = packetBytes[i];
+
+							byte key = (byte)Math.abs(b);
+							byte action = (byte)(b >>> 7);
+
+							PianoKey pianoKey;
+							switch (key)
 							{
-								final byte b = packetBytes[i];
-
-								byte key = (byte)Math.abs(b);
-								byte action = (byte)(b >>> 7);
-
-								PianoKey pianoKey;
-								switch (key)
-								{
-									case 1:
-										pianoKey = key1;
-										break;
-									case 2:
-										pianoKey = key2;
-										break;
-									case 3:
-										pianoKey = key3;
-										break;
-									case 4:
-										pianoKey = key4;
-										break;
-									case 5:
-										pianoKey = key5;
-										break;
-									case 6:
-										pianoKey = key6;
-										break;
-									default:
-										continue;
-								}
-
-								if (action == 0)
-									pianoKey.play();
-								else
-									pianoKey.stop();
+								case 1:
+									pianoKey = key1;
+									break;
+								case 2:
+									pianoKey = key2;
+									break;
+								case 3:
+									pianoKey = key3;
+									break;
+								case 4:
+									pianoKey = key4;
+									break;
+								case 5:
+									pianoKey = key5;
+									break;
+								case 6:
+									pianoKey = key6;
+									break;
+								default:
+									continue;
 							}
+
+							if (action == 0)
+								pianoKey.play();
+							else
+								pianoKey.stop();
 						}
-					} catch (IOException ex)
-					{
-						stopWorker = true;
 					}
+				} catch (IOException ex)
+				{
+					stopWorker = true;
 				}
-				terminateThreads();
 			}
+			terminateThreads();
 		});
 
 		workerThread.start();

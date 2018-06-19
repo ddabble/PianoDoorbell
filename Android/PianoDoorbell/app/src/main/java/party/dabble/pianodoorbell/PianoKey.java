@@ -36,25 +36,22 @@ public class PianoKey
 				AudioFormat.ENCODING_PCM_16BIT, generatedSnd.length,
 				AudioTrack.MODE_STREAM);
 
-		soundThread = new Thread(new Runnable()
+		soundThread = new Thread(() ->
 		{
-			public void run()
+			audioTrack.write(generatedSnd, 0, generatedSnd.length);
+			audioTrack.play();
+			play = true;
+
+			while (!terminate)
 			{
-				audioTrack.write(generatedSnd, 0, generatedSnd.length);
-				audioTrack.play();
-				play = true;
-
-				while (!terminate)
+				while (play)
 				{
-					while (play)
-					{
-						audioTrack.write(generatedSnd, 0, generatedSnd.length);
+					audioTrack.write(generatedSnd, 0, generatedSnd.length);
 
-						Util.sleep((long)(duration * 1000));
-					}
-
-					Util.sleep(10);
+					Util.sleep((long)(duration * 1000));
 				}
+
+				Util.sleep(10);
 			}
 		});
 	}
