@@ -23,25 +23,25 @@ import java.util.UUID;
 
 public class MainActivity extends Activity
 {
-	BluetoothAdapter bluetoothAdapter;
-	BluetoothSocket bluetoothSocket;
-	BluetoothDevice bluetoothDevice;
+	private BluetoothAdapter bluetoothAdapter;
+	private BluetoothSocket bluetoothSocket;
+	private BluetoothDevice bluetoothDevice;
 
-	OutputStream outputStream;
-	InputStream inputStream;
+	private OutputStream outputStream;
+	private InputStream inputStream;
 
-	TextView myLabel;
-	EditText myTextbox;
+	private TextView myLabel;
+	private EditText myTextbox;
 
-	Thread listenerThread;
-	volatile boolean keepListening;
+	private Thread listenerThread;
+	private volatile boolean keepListening;
 
-	PianoKey key1;
-	PianoKey key2;
-	PianoKey key3;
-	PianoKey key4;
-	PianoKey key5;
-	PianoKey key6;
+	private PianoKey key1;
+	private PianoKey key2;
+	private PianoKey key3;
+	private PianoKey key4;
+	private PianoKey key5;
+	private PianoKey key6;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState)
@@ -60,8 +60,8 @@ public class MainActivity extends Activity
 		{
 			try
 			{
-				findBT();
-				openBT();
+				findBluetoothDevice();
+				connectToBluetoothDevice();
 			} catch (IOException e)
 			{
 				e.printStackTrace();
@@ -85,7 +85,7 @@ public class MainActivity extends Activity
 		{
 			try
 			{
-				closeBT();
+				disconnectFromBluetoothDevice();
 			} catch (IOException e)
 			{
 				e.printStackTrace();
@@ -93,7 +93,7 @@ public class MainActivity extends Activity
 		});
 	}
 
-	void findBT()
+	private void findBluetoothDevice()
 	{
 		bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 		if (bluetoothAdapter == null)
@@ -121,7 +121,7 @@ public class MainActivity extends Activity
 		myLabel.setText("Bluetooth Device Found");
 	}
 
-	void openBT() throws IOException
+	private void connectToBluetoothDevice() throws IOException
 	{
 		UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"); //Standard SerialPortService ID
 		bluetoothSocket = bluetoothDevice.createRfcommSocketToServiceRecord(uuid);
@@ -134,7 +134,7 @@ public class MainActivity extends Activity
 		myLabel.setText("Bluetooth Opened");
 	}
 
-	void beginListeningForData()
+	private void beginListeningForData()
 	{
 		keepListening = true;
 		listenerThread = new Thread(() ->
@@ -205,13 +205,13 @@ public class MainActivity extends Activity
 					keepListening = false;
 				}
 			}
-			terminateThreads();
+			terminatePianoKeys();
 		});
 
 		listenerThread.start();
 	}
 
-	void sendData() throws IOException
+	private void sendData() throws IOException
 	{
 		String msg = myTextbox.getText().toString();
 		msg += "\n";
@@ -219,17 +219,17 @@ public class MainActivity extends Activity
 		myLabel.setText("Data Sent");
 	}
 
-	void closeBT() throws IOException
+	private void disconnectFromBluetoothDevice() throws IOException
 	{
 		keepListening = false;
-		terminateThreads();
+		terminatePianoKeys();
 		outputStream.close();
 		inputStream.close();
 		bluetoothSocket.close();
 		myLabel.setText("Bluetooth Closed");
 	}
 
-	private void terminateThreads()
+	private void terminatePianoKeys()
 	{
 		key1.terminate();
 		key2.terminate();

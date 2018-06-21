@@ -20,25 +20,25 @@ public class PianoKey
 	private final AudioTrack audioTrack;
 
 	private static final int SAMPLE_RATE = 8000;
-	private static final float duration = 0.1f; // seconds
-	private static int numSamples = (int)(duration * SAMPLE_RATE);
+	private static final float DURATION = 0.1f; // seconds
+	private static int numSamples = (int)(DURATION * SAMPLE_RATE);
 
-	private byte[] generatedSnd = new byte[2 * numSamples];
+	private byte[] generatedSound = new byte[2 * numSamples];
 
 	public PianoKey(float toneFrequency)
 	{
 		this.toneFrequency = toneFrequency;
 
-		genTone();
+		generateSoundData();
 
 		audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
 				SAMPLE_RATE, AudioFormat.CHANNEL_OUT_MONO,
-				AudioFormat.ENCODING_PCM_16BIT, generatedSnd.length,
+				AudioFormat.ENCODING_PCM_16BIT, generatedSound.length,
 				AudioTrack.MODE_STREAM);
 
 		soundThread = new Thread(() ->
 		{
-			audioTrack.write(generatedSnd, 0, generatedSnd.length);
+			audioTrack.write(generatedSound, 0, generatedSound.length);
 			audioTrack.play();
 			play = true;
 
@@ -46,9 +46,9 @@ public class PianoKey
 			{
 				while (play)
 				{
-					audioTrack.write(generatedSnd, 0, generatedSnd.length);
+					audioTrack.write(generatedSound, 0, generatedSound.length);
 
-					Util.sleep((long)(duration * 1000));
+					Util.sleep((long)(DURATION * 1000));
 				}
 
 				Util.sleep(10);
@@ -56,7 +56,7 @@ public class PianoKey
 		});
 	}
 
-	private void genTone()
+	private void generateSoundData()
 	{
 		// calculate adjustments to make the sample start and stop evenly
 		int numCycles = (int)(0.5 + toneFrequency);
@@ -70,7 +70,7 @@ public class PianoKey
 
 		// convert to 16 bit pcm sound array
 		// assumes the sample buffer is normalized.
-		generatedSnd = new byte[samples.length * 2];
+		generatedSound = new byte[samples.length * 2];
 		int idx = 0;
 		for (double sample : samples)
 		{
@@ -81,8 +81,8 @@ public class PianoKey
 			// scale signal to amplitude
 			short val = (short)(sample * amplitude);
 			// in 16 bit wav PCM, first byte is the low order byte
-			generatedSnd[idx++] = (byte)(val & 0x00FF);
-			generatedSnd[idx++] = (byte)((val & 0xFF00) >>> 8);
+			generatedSound[idx++] = (byte)(val & 0x00FF);
+			generatedSound[idx++] = (byte)((val & 0xFF00) >>> 8);
 		}
 	}
 
@@ -99,7 +99,7 @@ public class PianoKey
 
 		synchronized (audioTrack)
 		{
-			audioTrack.write(generatedSnd, 0, generatedSnd.length);
+			audioTrack.write(generatedSound, 0, generatedSound.length);
 			audioTrack.play();
 		}
 
