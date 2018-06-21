@@ -12,6 +12,9 @@ import android.media.AudioTrack;
 
 public class PianoKey
 {
+	private static final int SAMPLE_RATE = 8000;
+	private static final float DURATION = 0.1f; // seconds
+
 	private final float toneFrequency;
 
 	private Thread soundThread;
@@ -19,8 +22,6 @@ public class PianoKey
 	private volatile boolean play;
 	private final AudioTrack audioTrack;
 
-	private static final int SAMPLE_RATE = 8000;
-	private static final float DURATION = 0.1f; // seconds
 	private static int numSamples = (int)(DURATION * SAMPLE_RATE);
 
 	private byte[] generatedSound = new byte[2 * numSamples];
@@ -36,24 +37,7 @@ public class PianoKey
 				AudioFormat.ENCODING_PCM_16BIT, generatedSound.length,
 				AudioTrack.MODE_STREAM);
 
-		soundThread = new Thread(() ->
-		{
-			audioTrack.write(generatedSound, 0, generatedSound.length);
-			audioTrack.play();
-			play = true;
-
-			while (!terminate)
-			{
-				while (play)
-				{
-					audioTrack.write(generatedSound, 0, generatedSound.length);
-
-					Util.sleep((long)(DURATION * 1000));
-				}
-
-				Util.sleep(10);
-			}
-		});
+		initSoundThread();
 	}
 
 	private void generateSoundData()
@@ -86,6 +70,42 @@ public class PianoKey
 		}
 	}
 
+	private void initSoundThread()
+	{
+		soundThread = new Thread(() ->
+		{
+			audioTrack.write(generatedSound, 0, generatedSound.length);
+			audioTrack.play();
+			play = true;
+
+			while (!terminate)
+			{
+				while (play)
+				{
+					audioTrack.write(generatedSound, 0, generatedSound.length);
+
+					Util.sleep((long)(DURATION * 1000));
+				}
+
+				Util.sleep(10);
+			}
+		});
+	}
+
+	public void terminate()
+	{
+		terminate = true;
+		stop();
+
+		try
+		{
+			soundThread.join();
+		} catch (InterruptedException e)
+		{
+			e.printStackTrace();
+		}
+	}
+
 	public void play()
 	{
 		if (play)
@@ -114,20 +134,6 @@ public class PianoKey
 
 			audioTrack.pause();
 			audioTrack.flush();
-		}
-	}
-
-	public void terminate()
-	{
-		terminate = true;
-		stop();
-
-		try
-		{
-			soundThread.join();
-		} catch (InterruptedException e)
-		{
-			e.printStackTrace();
 		}
 	}
 }
