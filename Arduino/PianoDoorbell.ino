@@ -49,7 +49,7 @@ void checkKeyState(const int index, const unsigned long currentTime_micros)
   if (keyState != keyLastStates[index])
   {
     int action = (keyState == HIGH) ? -1 : 1;
-    btSerial.write(action * (index + 1));
+    btSerial.write(action * index);
 
     keyLastStates[index] = keyState;
     keyLastStateChanges[index] = currentTime_micros;

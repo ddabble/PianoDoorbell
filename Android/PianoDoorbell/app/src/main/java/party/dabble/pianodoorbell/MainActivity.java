@@ -42,15 +42,10 @@ public class MainActivity extends Activity
 	private Button disconnectButton;
 	private Button sendButton;
 
+	private PianoKey[] keys;
+
 	private Thread listenerThread;
 	private volatile boolean keepListening;
-
-	private PianoKey key1;
-	private PianoKey key2;
-	private PianoKey key3;
-	private PianoKey key4;
-	private PianoKey key5;
-	private PianoKey key6;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState)
@@ -215,35 +210,13 @@ public class MainActivity extends Activity
 					byte key = (byte)Math.abs(b);
 					byte action = (byte)(b >>> 7);
 
-					PianoKey pianoKey;
-					switch (key)
-					{
-						case 1:
-							pianoKey = key1;
-							break;
-						case 2:
-							pianoKey = key2;
-							break;
-						case 3:
-							pianoKey = key3;
-							break;
-						case 4:
-							pianoKey = key4;
-							break;
-						case 5:
-							pianoKey = key5;
-							break;
-						case 6:
-							pianoKey = key6;
-							break;
-						default:
-							continue;
-					}
+					if (key < 0 || key >= keys.length)
+						continue;
 
 					if (action == 0)
-						pianoKey.play();
+						keys[key].play();
 					else
-						pianoKey.stop();
+						keys[key].stop();
 				}
 			}
 
@@ -254,29 +227,28 @@ public class MainActivity extends Activity
 
 	private void initPianoKeys()
 	{
-		key1 = new PianoKey(440.00f);
-		key2 = new PianoKey(466.16f);
-		key3 = new PianoKey(493.88f);
-		key4 = new PianoKey(523.25f);
-		key5 = new PianoKey(554.37f);
-		key6 = new PianoKey(587.33f);
+		keys = new PianoKey[]
+				{
+						new PianoKey(440.00f),
+						new PianoKey(466.16f),
+						new PianoKey(493.88f),
+						new PianoKey(523.25f),
+						new PianoKey(554.37f),
+						new PianoKey(587.33f),
 
-//		key7 = new PianoKey(622.25f);
-//		key8 = new PianoKey(659.25f);
-//		key9 = new PianoKey(698.46f);
-//		key10 = new PianoKey(739.99f);
-//		key11 = new PianoKey(783.99f);
-//		key12 = new PianoKey(830.61f);
+//						new PianoKey(622.25f),
+//						new PianoKey(659.25f),
+//						new PianoKey(698.46f),
+//						new PianoKey(739.99f),
+//						new PianoKey(783.99f),
+//						new PianoKey(830.61f),
+				};
 	}
 
 	private void terminatePianoKeys()
 	{
-		key1.terminate();
-		key2.terminate();
-		key3.terminate();
-		key4.terminate();
-		key5.terminate();
-		key6.terminate();
+		for (PianoKey key : keys)
+			key.terminate();
 	}
 
 	private void showText(String notification, long delayMillis)
