@@ -79,12 +79,17 @@ public class MainActivity extends Activity
 			{
 				showError("Could not connect to Bluetooth device \"" + deviceName + "\"", DEFAULT_NOTIFICATION_DELAY);
 				e.printStackTrace();
+				return;
 			}
+
+			setButtonsToConnectedMode(true);
 		});
 
 		// Disconnect button
 		disconnectButton.setOnClickListener((View v) ->
 		{
+			setButtonsToConnectedMode(false);
+
 			disconnectFromBluetoothDevice();
 		});
 
@@ -92,6 +97,24 @@ public class MainActivity extends Activity
 		sendButton.setOnClickListener((View v) ->
 		{
 			sendData(messageBox.getText().toString());
+		});
+	}
+
+	private void setButtonsToConnectedMode(final boolean isConnected)
+	{
+		runOnUiThread(() ->
+		{
+			deviceNameBox.setEnabled(!isConnected);
+			messageBox.setEnabled(isConnected);
+
+			connectButton.setEnabled(!isConnected);
+			disconnectButton.setEnabled(isConnected);
+			sendButton.setEnabled(isConnected);
+
+			if (isConnected)
+				messageBox.requestFocus();
+			else
+				messageBox.clearFocus();
 		});
 	}
 

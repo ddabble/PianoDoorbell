@@ -16,15 +16,13 @@ public class PianoKey
 	private static final float DURATION = 0.1f; // seconds
 
 	private final float toneFrequency;
+	private byte[] generatedSound;
+
+	private final AudioTrack audioTrack;
 
 	private Thread soundThread;
 	private volatile boolean terminate = false;
 	private volatile boolean play;
-	private final AudioTrack audioTrack;
-
-	private static int numSamples = (int)(DURATION * SAMPLE_RATE);
-
-	private byte[] generatedSound = new byte[2 * numSamples];
 
 	public PianoKey(float toneFrequency)
 	{
@@ -44,7 +42,7 @@ public class PianoKey
 	{
 		// calculate adjustments to make the sample start and stop evenly
 		int numCycles = (int)(0.5 + toneFrequency);
-		numSamples = (int)(0.5 + numCycles * SAMPLE_RATE / toneFrequency);
+		int numSamples = (int)(0.5 + numCycles * SAMPLE_RATE / toneFrequency);
 
 		double[] samples = new double[numSamples];
 
