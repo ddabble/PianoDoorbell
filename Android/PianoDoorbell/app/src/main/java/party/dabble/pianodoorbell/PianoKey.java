@@ -35,7 +35,7 @@ public class PianoKey
 				AudioFormat.ENCODING_PCM_16BIT, generatedSound.length,
 				AudioTrack.MODE_STREAM);
 
-		initSoundThread();
+		startSoundThread();
 	}
 
 	private void generateSoundData()
@@ -68,14 +68,10 @@ public class PianoKey
 		}
 	}
 
-	private void initSoundThread()
+	private void startSoundThread()
 	{
 		soundThread = new Thread(() ->
 		{
-			audioTrack.write(generatedSound, 0, generatedSound.length);
-			audioTrack.play();
-			play = true;
-
 			while (!terminate)
 			{
 				while (play)
@@ -88,12 +84,14 @@ public class PianoKey
 				Util.sleep(10);
 			}
 		});
+		soundThread.start();
 	}
 
 	public void terminate()
 	{
 		terminate = true;
 		stop();
+		audioTrack.release();
 
 		try
 		{
@@ -109,12 +107,6 @@ public class PianoKey
 		if (play)
 			return;
 
-		if (!soundThread.isAlive())
-		{
-			soundThread.start();
-			return;
-		}
-
 		synchronized (audioTrack)
 		{
 			audioTrack.write(generatedSound, 0, generatedSound.length);
@@ -126,6 +118,9 @@ public class PianoKey
 
 	public void stop()
 	{
+		if (!play)
+			return;
+
 		synchronized (audioTrack)
 		{
 			play = false;

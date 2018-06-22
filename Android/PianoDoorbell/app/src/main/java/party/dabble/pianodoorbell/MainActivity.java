@@ -11,6 +11,8 @@ import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -166,14 +168,16 @@ public class MainActivity extends Activity
 
 	private void disconnectFromBluetoothDevice()
 	{
-		keepListening = false;
-		terminatePianoKeys();
+		stopListeningForData();
 
 		try
 		{
-			outputStream.close();
-			inputStream.close();
-			bluetoothSocket.close();
+			if (outputStream != null)
+				outputStream.close();
+			if (inputStream != null)
+				inputStream.close();
+			if (bluetoothSocket != null)
+				bluetoothSocket.close();
 		} catch (IOException e)
 		{
 			showError("Error while closing Bluetooth connection", DEFAULT_NOTIFICATION_DELAY);
@@ -202,11 +206,11 @@ public class MainActivity extends Activity
 
 	private void beginListeningForData()
 	{
+		initPianoKeys();
+
 		keepListening = true;
 		listenerThread = new Thread(() ->
 		{
-			initPianoKeys();
-
 			while (keepListening && !Thread.currentThread().isInterrupted())
 			{
 				int bytesAvailable;
@@ -221,7 +225,8 @@ public class MainActivity extends Activity
 					inputStream.read(packetBytes);
 				} catch (IOException ex)
 				{
-					keepListening = false;
+					new Handler(Looper.getMainLooper()).post(this::disconnectFromBluetoothDevice); // Disconnect in main thread to avoid this thread joining itself (in stopListeningForData())
+					setButtonsToConnectedMode(false);
 					showError("Error while listening to Bluetooth device; please try connecting again", DEFAULT_NOTIFICATION_DELAY);
 					break;
 				}
@@ -246,6 +251,18 @@ public class MainActivity extends Activity
 			terminatePianoKeys();
 		});
 		listenerThread.start();
+	}
+
+	private void stopListeningForData()
+	{
+		keepListening = false;
+		try
+		{
+			listenerThread.join();
+		} catch (InterruptedException e)
+		{
+			e.printStackTrace();
+		}
 	}
 
 	private void initPianoKeys()
