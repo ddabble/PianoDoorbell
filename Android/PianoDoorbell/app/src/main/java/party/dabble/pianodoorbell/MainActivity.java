@@ -9,6 +9,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -24,6 +25,8 @@ import java.util.UUID;
 public class MainActivity extends Activity
 {
 	private static final String DEFAULT_BLUETOOTH_DEVICE_NAME = "PLab_Anders";
+	private static final long DEFAULT_NOTIFICATION_DELAY = 200; // milliseconds
+
 	private BluetoothAdapter bluetoothAdapter;
 	private BluetoothSocket bluetoothSocket;
 	private BluetoothDevice bluetoothDevice;
@@ -69,16 +72,17 @@ public class MainActivity extends Activity
 		// Connect button
 		connectButton.setOnClickListener((View v) ->
 		{
+			final String deviceName = deviceNameBox.getText().toString();
+			bluetoothDevice = findBluetoothDevice(deviceName);
+			if (bluetoothDevice == null)
+				return;
+
 			try
 			{
-				final String deviceName = deviceNameBox.getText().toString();
-				bluetoothDevice = findBluetoothDevice(deviceName);
-				if (bluetoothDevice == null)
-					return;
-
 				connectToBluetoothDevice();
 			} catch (IOException e)
 			{
+				showError("Could not connect to Bluetooth device \"" + deviceName + "\"", DEFAULT_NOTIFICATION_DELAY);
 				e.printStackTrace();
 			}
 		});
@@ -86,25 +90,13 @@ public class MainActivity extends Activity
 		// Disconnect button
 		disconnectButton.setOnClickListener((View v) ->
 		{
-			try
-			{
-				disconnectFromBluetoothDevice();
-			} catch (IOException e)
-			{
-				e.printStackTrace();
-			}
+			disconnectFromBluetoothDevice();
 		});
 
 		// Send button
 		sendButton.setOnClickListener((View v) ->
 		{
-			try
-			{
-				sendData(messageBox.getText().toString());
-			} catch (IOException e)
-			{
-				e.printStackTrace();
-			}
+			sendData(messageBox.getText().toString());
 		});
 	}
 
@@ -113,7 +105,7 @@ public class MainActivity extends Activity
 		bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 		if (bluetoothAdapter == null)
 		{
-			notificationText.setText("No bluetooth adapter available");
+			showError("No Bluetooth adapter available", DEFAULT_NOTIFICATION_DELAY);
 			return null;
 		}
 
@@ -121,6 +113,7 @@ public class MainActivity extends Activity
 		{
 			Intent enableBluetooth = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
 			startActivityForResult(enableBluetooth, 0);
+			showError("Bluetooth turned off; please try again", DEFAULT_NOTIFICATION_DELAY);
 			return null;
 		}
 
@@ -131,17 +124,17 @@ public class MainActivity extends Activity
 			{
 				String name = device.getName().trim();
 				if (name.equals(deviceName))
-				{
-					notificationText.setText("Bluetooth Device Found");
 					return device;
-				}
 			}
 		}
+		showError("Paired Bluetooth device \"" + deviceName + "\" not found", DEFAULT_NOTIFICATION_DELAY);
 		return null;
 	}
 
 	private void connectToBluetoothDevice() throws IOException
 	{
+		showText("", 0); // Clear text first, since connecting usually takes pretty long
+
 		UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"); //Standard SerialPortService ID
 		bluetoothSocket = bluetoothDevice.createRfcommSocketToServiceRecord(uuid);
 		bluetoothSocket.connect();
@@ -150,24 +143,43 @@ public class MainActivity extends Activity
 
 		beginListeningForData();
 
-		notificationText.setText("Bluetooth Opened");
+		showText("Connected to Bluetooth device", DEFAULT_NOTIFICATION_DELAY);
 	}
 
-	private void disconnectFromBluetoothDevice() throws IOException
+	private void disconnectFromBluetoothDevice()
 	{
 		keepListening = false;
 		terminatePianoKeys();
-		outputStream.close();
-		inputStream.close();
-		bluetoothSocket.close();
-		notificationText.setText("Bluetooth Closed");
+
+		try
+		{
+			outputStream.close();
+			inputStream.close();
+			bluetoothSocket.close();
+		} catch (IOException e)
+		{
+			showError("Error while closing Bluetooth connection", DEFAULT_NOTIFICATION_DELAY);
+			e.printStackTrace();
+			return;
+		}
+
+		showText("Disconnected from Bluetooth device", DEFAULT_NOTIFICATION_DELAY);
 	}
 
-	private void sendData(String message) throws IOException
+	private void sendData(String message)
 	{
 		message += "\n";
-		outputStream.write(message.getBytes());
-		notificationText.setText("Data Sent");
+		try
+		{
+			outputStream.write(message.getBytes());
+		} catch (IOException e)
+		{
+			showError("Error while sending data", DEFAULT_NOTIFICATION_DELAY);
+			e.printStackTrace();
+			return;
+		}
+
+		showText("Data sent", DEFAULT_NOTIFICATION_DELAY);
 	}
 
 	private void beginListeningForData()
@@ -192,7 +204,8 @@ public class MainActivity extends Activity
 				} catch (IOException ex)
 				{
 					keepListening = false;
-					continue;
+					showError("Error while listening to Bluetooth device; please try connecting again", DEFAULT_NOTIFICATION_DELAY);
+					break;
 				}
 
 				for (int i = 0; i < bytesAvailable; i++)
@@ -264,5 +277,30 @@ public class MainActivity extends Activity
 		key4.terminate();
 		key5.terminate();
 		key6.terminate();
+	}
+
+	private void showText(String notification, long delayMillis)
+	{
+		showText(notification, "#8A000000", delayMillis); // default text color
+	}
+
+	private void showError(String notification, long delayMillis)
+	{
+		showText(notification, "#FF4081", delayMillis); // @color/colorAccent
+	}
+
+	private void showText(final String notification, final String colorHex, final long delayMillis)
+	{
+		runOnUiThread(() ->
+		{
+			if (delayMillis > 0)
+				showText("", 0); // Clear text, to give the user feedback even when the text doesn't change
+
+			new Handler().postDelayed(() ->
+			{
+				notificationText.setTextColor(Color.parseColor(colorHex));
+				notificationText.setText(notification);
+			}, delayMillis);
+		});
 	}
 }
