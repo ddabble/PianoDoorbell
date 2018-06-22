@@ -6,40 +6,65 @@
 				tools:ignore="TextFields,HardcodedText">
 
 	<TextView
-			android:id="@+id/label"
+			android:id="@+id/device_label"
 			android:layout_width="fill_parent"
 			android:layout_height="wrap_content"
-			android:text="Type here:"/>
+			android:text="Bluetooth device name:"/>
 
 	<EditText
-			android:id="@+id/entry"
+			android:id="@+id/device"
 			android:layout_width="fill_parent"
 			android:layout_height="wrap_content"
-			android:layout_below="@id/label"
+			android:layout_below="@id/device_label"
 			android:background="@android:drawable/editbox_background"/>
 
 	<Button
-			android:id="@+id/open"
+			android:id="@+id/connect"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
-			android:layout_alignParentRight="true"
-			android:layout_below="@id/entry"
-			android:layout_marginLeft="10dip"
-			android:text="Open"/>
+			android:layout_alignParentEnd="true"
+			android:layout_below="@id/device"
+			android:layout_marginStart="10dip"
+			android:text="Connect"/>
+
+	<Button
+			android:id="@+id/disconnect"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@id/connect"
+			android:layout_toStartOf="@id/connect"
+			android:text="Disconnect"
+			android:enabled="false"/>
+
+	<TextView
+			android:id="@+id/message_label"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:layout_below="@id/disconnect"
+			android:text="Message to send:"/>
+
+	<EditText
+			android:id="@+id/message"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:layout_below="@id/message_label"
+			android:background="@android:drawable/editbox_background"
+			android:enabled="false"/>
 
 	<Button
 			android:id="@+id/send"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
-			android:layout_alignTop="@id/open"
-			android:layout_toLeftOf="@id/open"
-			android:text="Send"/>
+			android:layout_alignParentEnd="true"
+			android:layout_below="@id/message"
+			android:text="Send"
+			android:enabled="false"/>
 
-	<Button
-			android:id="@+id/close"
-			android:layout_width="wrap_content"
+	<TextView
+			android:id="@+id/notification"
+			android:layout_width="fill_parent"
 			android:layout_height="wrap_content"
-			android:layout_alignTop="@id/send"
-			android:layout_toLeftOf="@id/send"
-			android:text="Close"/>
+			android:layout_below="@id/send"
+			android:layout_marginTop="20dip"
+			android:layout_marginStart="20dip"/>
 </RelativeLayout>

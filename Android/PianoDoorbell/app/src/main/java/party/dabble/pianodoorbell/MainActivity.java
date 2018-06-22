@@ -23,6 +23,7 @@ import java.util.UUID;
 
 public class MainActivity extends Activity
 {
+	private static final String DEFAULT_BLUETOOTH_DEVICE_NAME = "PLab_Anders";
 	private BluetoothAdapter bluetoothAdapter;
 	private BluetoothSocket bluetoothSocket;
 	private BluetoothDevice bluetoothDevice;
@@ -30,8 +31,13 @@ public class MainActivity extends Activity
 	private OutputStream outputStream;
 	private InputStream inputStream;
 
-	private TextView myLabel;
-	private EditText myTextbox;
+	private EditText deviceNameBox;
+	private EditText messageBox;
+	private TextView notificationText;
+
+	private Button connectButton;
+	private Button disconnectButton;
+	private Button sendButton;
 
 	private Thread listenerThread;
 	private volatile boolean keepListening;
@@ -49,18 +55,27 @@ public class MainActivity extends Activity
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-		Button openButton = (Button)findViewById(R.id.open);
-		Button sendButton = (Button)findViewById(R.id.send);
-		Button closeButton = (Button)findViewById(R.id.close);
-		myLabel = (TextView)findViewById(R.id.label);
-		myTextbox = (EditText)findViewById(R.id.entry);
+		deviceNameBox = findViewById(R.id.device);
+		deviceNameBox.setText(DEFAULT_BLUETOOTH_DEVICE_NAME);
 
-		//Open Button
-		openButton.setOnClickListener((View v) ->
+		messageBox = findViewById(R.id.message);
+
+		connectButton = findViewById(R.id.connect);
+		disconnectButton = findViewById(R.id.disconnect);
+		sendButton = findViewById(R.id.send);
+
+		notificationText = findViewById(R.id.notification);
+
+		// Connect button
+		connectButton.setOnClickListener((View v) ->
 		{
 			try
 			{
-				findBluetoothDevice();
+				final String deviceName = deviceNameBox.getText().toString();
+				bluetoothDevice = findBluetoothDevice(deviceName);
+				if (bluetoothDevice == null)
+					return;
+
 				connectToBluetoothDevice();
 			} catch (IOException e)
 			{
@@ -68,8 +83,8 @@ public class MainActivity extends Activity
 			}
 		});
 
-		//Close button
-		closeButton.setOnClickListener((View v) ->
+		// Disconnect button
+		disconnectButton.setOnClickListener((View v) ->
 		{
 			try
 			{
@@ -80,12 +95,12 @@ public class MainActivity extends Activity
 			}
 		});
 
-		//Send Button
+		// Send button
 		sendButton.setOnClickListener((View v) ->
 		{
 			try
 			{
-				sendData();
+				sendData(messageBox.getText().toString());
 			} catch (IOException e)
 			{
 				e.printStackTrace();
@@ -93,16 +108,20 @@ public class MainActivity extends Activity
 		});
 	}
 
-	private void findBluetoothDevice()
+	private BluetoothDevice findBluetoothDevice(String deviceName)
 	{
 		bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 		if (bluetoothAdapter == null)
-			myLabel.setText("No bluetooth adapter available");
+		{
+			notificationText.setText("No bluetooth adapter available");
+			return null;
+		}
 
 		if (!bluetoothAdapter.isEnabled())
 		{
 			Intent enableBluetooth = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
 			startActivityForResult(enableBluetooth, 0);
+			return null;
 		}
 
 		Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
@@ -111,14 +130,14 @@ public class MainActivity extends Activity
 			for (BluetoothDevice device : pairedDevices)
 			{
 				String name = device.getName().trim();
-				if (name.equals("PLab_Anders"))
+				if (name.equals(deviceName))
 				{
-					bluetoothDevice = device;
-					break;
+					notificationText.setText("Bluetooth Device Found");
+					return device;
 				}
 			}
 		}
-		myLabel.setText("Bluetooth Device Found");
+		return null;
 	}
 
 	private void connectToBluetoothDevice() throws IOException
@@ -131,7 +150,7 @@ public class MainActivity extends Activity
 
 		beginListeningForData();
 
-		myLabel.setText("Bluetooth Opened");
+		notificationText.setText("Bluetooth Opened");
 	}
 
 	private void disconnectFromBluetoothDevice() throws IOException
@@ -141,15 +160,14 @@ public class MainActivity extends Activity
 		outputStream.close();
 		inputStream.close();
 		bluetoothSocket.close();
-		myLabel.setText("Bluetooth Closed");
+		notificationText.setText("Bluetooth Closed");
 	}
 
-	private void sendData() throws IOException
+	private void sendData(String message) throws IOException
 	{
-		String msg = myTextbox.getText().toString();
-		msg += "\n";
-		outputStream.write(msg.getBytes());
-		myLabel.setText("Data Sent");
+		message += "\n";
+		outputStream.write(message.getBytes());
+		notificationText.setText("Data Sent");
 	}
 
 	private void beginListeningForData()
