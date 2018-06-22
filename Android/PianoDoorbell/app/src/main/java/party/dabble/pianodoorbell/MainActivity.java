@@ -155,7 +155,7 @@ public class MainActivity extends Activity
 	{
 		showText("", 0); // Clear text first, since connecting usually takes pretty long
 
-		UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"); //Standard SerialPortService ID
+		UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"); // Standard SerialPortService ID
 		bluetoothSocket = bluetoothDevice.createRfcommSocketToServiceRecord(uuid);
 		bluetoothSocket.connect();
 		outputStream = bluetoothSocket.getOutputStream();
